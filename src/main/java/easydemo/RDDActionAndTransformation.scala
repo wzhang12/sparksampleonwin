@@ -4,6 +4,7 @@ package easydemo
   * Created by zhangwen on 2016/3/8.
   */
 import org.apache.spark._
+import org.apache.spark.streaming.dstream.DStream
 
 //统计字符出现次数
 object RDDActionAndTransformation {
@@ -65,7 +66,41 @@ object RDDActionAndTransformation {
     println(z.repartition(4))
     //repartition returns a new RDD with the partitioning changed
     println(z.repartition(4).partitions.size)
+    /*
+    union:简单的合并
+    intersection:该函数返回两个RDD的交集，并且去重。参数numPartitions指定返回的RDD的分区数。参数partitioner用于指定分区函数
+    subtract：返回在调用RDD中出现，并且不在函数传入的RDD中出现的元素，不去重。
+     */
 
+    /*
+    mapPartitions是粗粒度的map，x是一个分区中的集合
+    返回的是一个iterator可迭代的对象
+     */
+    val rddMapPartition = sc.makeRDD(1 to 5,2)
+    val rddMapPartitionDealed = rddMapPartition.mapPartitions{x=>{
+    val result = List[Int]()
+         var i = 0
+         while(x.hasNext){
+            i += x.next()
+          }
+         result.::(i).iterator
+     }}
+    rddMapPartitionDealed.collect.foreach(print)
+
+    /*
+    mapPartitionsWithIndex在mapPartitions上加了分区的索引x
+     */
+    val rddMapPartitionIndexDealed = rddMapPartition.mapPartitionsWithIndex{
+      (x,iter) => {
+        val result = List[String]()
+        var i = 0
+        while(iter.hasNext){
+          i += iter.next()
+        }
+        result.::(x + "|" + i).iterator
+
+      }
+    }
       sc.stop()
   }
 
