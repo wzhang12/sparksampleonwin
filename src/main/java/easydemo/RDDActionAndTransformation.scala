@@ -85,8 +85,9 @@ object RDDActionAndTransformation {
           }
          result.::(i).iterator
      }}
-    rddMapPartitionDealed.collect.foreach(print)
-
+    println("=======mapPartition==============")
+    rddMapPartitionDealed.collect.foreach(println)
+    println("=======mapPartition==============")
     /*
     mapPartitionsWithIndex在mapPartitions上加了分区的索引x
      */
@@ -101,7 +102,40 @@ object RDDActionAndTransformation {
 
       }
     }
-      sc.stop()
+
+    /*
+    zip将两个rdd整合成(key,value)的形式，如果两个rdd中的分区不相等会报错
+     */
+    var rddZip0 = sc.makeRDD(1 to 5,2)
+    var rdd1ip1 = sc.makeRDD(Seq("A","B","C","D","E"),2)
+    println(rddZip0.zip(rdd1ip1).collect())
+
+    /*
+    zipPartition整合两个或三个
+    Similar to zip. But provides more control over the zipping process.
+     */
+    var rddZipPart0 = sc.makeRDD(1 to 5,2)
+    var rddZipPart1 = sc.makeRDD(Seq("A","B","C","D","E"),2)
+    val resultZip=rddZipPart0.zipPartitions(rddZipPart1){
+         (rdd1Iter,rdd2Iter) => {
+             var result = List[String]()
+             while(rdd1Iter.hasNext && rdd2Iter.hasNext) {
+                 result::=(rdd1Iter.next() + "_" + rdd2Iter.next())
+               }
+           result.iterator
+         }
+         }.collect()
+    println("=======zipPartitions==============")
+    resultZip.foreach(println)
+    println("=======zipPartitions==============")
+
+    /*
+    mapValues()操作，mapValues是针对[K,V]中的V值进行map操作，能穿个函数修改
+     */
+    val rddMapValues = sc.makeRDD(Array((1,"A"),(2,"B"),(3,"C"),(4,"D")),2)
+    rddMapValues.mapValues(x=>x+'_').collect().foreach(println)
+
+    sc.stop()
   }
 
   def seqOP(a:Int, b:Int) : Int = {
