@@ -133,7 +133,29 @@ object RDDActionAndTransformation {
     mapValues()操作，mapValues是针对[K,V]中的V值进行map操作，能穿个函数修改
      */
     val rddMapValues = sc.makeRDD(Array((1,"A"),(2,"B"),(3,"C"),(4,"D")),2)
+    println("=======mapValues==============")
     rddMapValues.mapValues(x=>x+'_').collect().foreach(println)
+    println("=======mapValues==============")
+
+    /*
+    flatMapValues()会破坏参数里的结构，然后与key去匹配,x是value
+     */
+    val rddflatMapValues = sc.makeRDD(Array((1,"A"),(2,"B"),(3,"C"),(4,"D")),2)
+    println("=======flatMapValues==============")
+    rddflatMapValues.flatMapValues(x=>x+'_'+'$').collect().foreach(println)
+    println("=======flatMapValues==============")
+
+    /*
+    combineByKey
+     */
+    val rddCombineByKey = sc.makeRDD(Array(("A",1),("A",2),("B",1),("B",2),("B",3),("C",1),("C",2)))
+    println("=======CombineByKey==============")
+    rddCombineByKey.combineByKey(
+           (v : Int) => v + "_",
+           (c : String, v : Int) => c + "#" + v,
+           (c1 : String, c2 : String) => c1 + "$" + c2
+         ).collect.foreach(println)
+    println("=======CombineByKey==============")
 
     sc.stop()
   }
