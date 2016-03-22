@@ -7,7 +7,7 @@ import org.apache.spark._
 import org.apache.spark.streaming.dstream.DStream
 
 //统计字符出现次数
-object RDDActionAndTransformation {
+object RDDTransformation {
   def main(args: Array[String]) {
       val logFile = "D:\\测试文本\\wordcontain.txt" // Should be some file on your system
       val conf = new SparkConf().setAppName("Simple Application").setMaster("local[4]")
@@ -91,17 +91,26 @@ object RDDActionAndTransformation {
     /*
     mapPartitionsWithIndex在mapPartitions上加了分区的索引x
      */
-    val rddMapPartitionIndexDealed = rddMapPartition.mapPartitionsWithIndex{
-      (x,iter) => {
-        val result = List[String]()
-        var i = 0
-        while(iter.hasNext){
-          i += iter.next()
-        }
-        result.::(x + "|" + i).iterator
+    val rddMapPartitionIndex = sc.makeRDD(Array(("A",1),("A",2),("B",1),("B",2),("B",3),("C",1),("C",2)))
+    val rddMapPartitionIndexDealed = rddMapPartitionIndex.mapPartitionsWithIndex{
 
+      (x,iter) => {
+        var result = List[String]()
+        while(iter.hasNext){
+          val item=iter.next
+          result=result.::(x + "|" + item._1+"|"+item._2)
+        }
+        result.iterator
       }
+
     }
+    println("=======mapPartitionsWithIndex==============")
+    println("partitions size "+rddMapPartitionIndex.partitions.size)
+    rddMapPartitionIndexDealed.collect.foreach(println)
+    println("=======mapPartitionsWithIndex==============")
+
+
+
 
     /*
     zip将两个rdd整合成(key,value)的形式，如果两个rdd中的分区不相等会报错
@@ -147,15 +156,49 @@ object RDDActionAndTransformation {
 
     /*
     combineByKey
+    0|A|1
+    1|B|1
+    1|A|2
+    2|B|3
+    2|B|2
+    3|C|2
+    3|C|1
+    默认分区是这样的，分区不同最后的结果也会不一样
+    当在一个分区第一次遇到key的时候会执行方法一，如果在这个分区仍然出现会执行方法二，当每个分区都执行完了
+    会以相同key的执行方法三
      */
     val rddCombineByKey = sc.makeRDD(Array(("A",1),("A",2),("B",1),("B",2),("B",3),("C",1),("C",2)))
     println("=======CombineByKey==============")
+    println("======="+rddCombineByKey.partitions.size+"==============")
     rddCombineByKey.combineByKey(
            (v : Int) => v + "_",
            (c : String, v : Int) => c + "#" + v,
            (c1 : String, c2 : String) => c1 + "$" + c2
          ).collect.foreach(println)
     println("=======CombineByKey==============")
+
+    /*
+    foldByKey
+    该函数用于RDD[K,V]根据K将V做折叠、合并处理，其中的参数zeroValue表示先根据映射函数将zeroValue应用于V,进行初始化V,再将映射函数应用于初始化后的V.
+     */
+    var rddFoldByKey = sc.makeRDD(Array(("A",0),("A",2),("B",1),("B",2),("C",1)))
+    println("=======foldByKey==============")
+    rddFoldByKey.foldByKey(0)(_+_).collect.foreach(println)
+    println("=======foldByKey==============")
+
+    /*
+    groupByKey 将相同key的value整合进CompactBuffer 返回RDD[(K, Iterable[V])]
+    reduceByKey
+    reduceByKeyLocally不能指定分区不能指定分区器 返回的是map
+    cogroup相当于SQL中的全外关联full outer join 但是与reduceBykey每个value都在一个CompactBuffer中，这里每个value都在一个CompactBuffer中
+    join相当于SQL中的内关联join，只返回两个RDD根据K可以关联上的结果，join只能用于两个RDD之间的关联，如果要多个RDD关联，多关联几次即可。
+
+    cogroup和join对应返回的RDD[(K, (Iterable[V], Iterable[W]))]和RDD[(K, (V, W))]
+    A leftOuterJoin B 保留a有b没有的 但不保留b有a没有的
+    A rightOuterJoin B
+    A subtractByKey B
+
+     */
 
     sc.stop()
   }
