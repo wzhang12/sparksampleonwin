@@ -195,8 +195,8 @@ object RDDTransformation {
 
     cogroup和join对应返回的RDD[(K, (Iterable[V], Iterable[W]))]和RDD[(K, (V, W))]
     A leftOuterJoin B 保留a有b没有的 但不保留b有a没有的
-    A rightOuterJoin B
-    A subtractByKey B
+    A rightOuterJoin B 保留b有a没有的 但不保留b没有a有的
+    A subtractByKey B 输出A有B没有的
 
      */
 
