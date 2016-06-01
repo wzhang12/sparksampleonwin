@@ -1,5 +1,7 @@
 package easydemo
 
+import java.util.Properties
+
 /**
   * Created by zhangwen on 2016/3/9.
   */
@@ -34,10 +36,29 @@ object SparkConnectionDemo {
         .load()
       df2.registerTempTable("cities")
 
-      val sql=sqlContext.sql("select * from addresses join cities on addresses.city_id=cities.city_id ")
-      sql.show()
+//      val sql=sqlContext.sql("select * from addresses join cities on addresses.city_id=cities.city_id ")
+//      sql.show()
 
+      import org.apache.spark.sql.functions.udf
+      val toUpperFn: String => String = _.toUpperCase
+      val toUpperUDF = udf(toUpperFn)
+      sqlContext.udf.register("toUpperFn",toUpperFn)
 
+     //val sql = sqlContext.sql("select toUpperFn(district) from addresses")
+//     sql.show()
+
+      val groupConcat = new GroupConcat(",")
+      sqlContext.udf.register("groupConcat",groupConcat)
+      val sql = sqlContext.sql("select groupConcat(city_id) from addresses")
+      sql.collect().foreach(println)
+
+//      val prop = new Properties()
+//      prop.put("user", "root")
+//      prop.put("password", "tiger")
+//      sql.write.mode("append").jdbc("jdbc:mysql://127.0.0.1:3306/sakila", "district", prop)
+      //加增量
+      //sql.write.format("com.databricks.spark.csv").save("C:\\spark\\district.csv")
+      Integer.valueOf("1")
       sc.stop()
     }
 }
