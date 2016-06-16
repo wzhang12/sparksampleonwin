@@ -6,13 +6,13 @@ import org.apache.spark.{SparkContext, SparkConf}
   * Created by zhangwen on 2016/3/8.
   */
 
-case class User(id:Int,name:String,depId:Int)
+case class User(id:Int,uname:String,depId:Int)
 case class Department(id:Int,name:String)
 
 object SparkDataFrameDemo {
   def main(args:Array[String]){
-    val departmentRecords = "D:\\测试文本\\department.txt"
-    val userRecords = "D:\\测试文本\\user.txt"
+    val departmentRecords = "C:\\测试文本\\department.txt"
+    val userRecords = "C:\\测试文本\\user.txt"
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local[4]")
     val sc = new SparkContext(conf)
     val sqlContext = new org.apache.spark.sql.SQLContext(sc)

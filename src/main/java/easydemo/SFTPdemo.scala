@@ -18,7 +18,7 @@ object SFTPdemo {
       format("com.springml.spark.sftp").
       option("host", "127.0.0.1").
       option("username", "spark").
-      option("password", "spark").
+      option("password", "*******").
       option("fileType", "csv").
       option("inferSchema", "true").
       load("/drives/C/spark/kmeans.csv")
